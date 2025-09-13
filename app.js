@@ -14,6 +14,7 @@ const comparisonsEl = document.getElementById("comparisons");
 const swapsEl = document.getElementById("swaps");
 const sizeVal = document.getElementById("sizeVal");
 const speedVal = document.getElementById("speedVal");
+const themeToggle = document.getElementById("themeToggle");
 
 let array = [];
 let bars = [];
@@ -26,6 +27,7 @@ let gen = null;
 let genIter = null;
 let staircaseOn = false; // default off
 let staircaseReverted = false;
+let staircasePrepared = false; // true when we regenerated a staircase array right before running
 let stoppedByUser = false;
 // helper to get/remove spinner
 function addSpinner() {
@@ -167,9 +169,18 @@ async function playGenerator(generator) {
   running = false;
   paused = false;
   // Apply staircase final layout if enabled and not reverted and not stopped by the user
-  if (!stoppedByUser && staircaseOn && !staircaseReverted) {
+  // If we didn't prepare a staircase input explicitly, animate the staircase final layout as a visual override.
+  // If we prepared a staircase array before running, the algorithm will actually sort to the staircase, so skip the extra animation.
+  if (
+    !stoppedByUser &&
+    staircaseOn &&
+    !staircaseReverted &&
+    !staircasePrepared
+  ) {
     await animateStaircase();
   }
+  // reset prepared flag after run
+  staircasePrepared = false;
   // remove spinner and ensure start/stop button reflects stopped state
   removeSpinner();
   if (startStopBtn) {
@@ -227,6 +238,13 @@ async function run() {
     alert("Algorithm not found: " + name);
     return;
   }
+  // If staircase mode is on, prepare a staircase-shaped underlying array so the algorithm actually sorts to it
+  if (staircaseOn) {
+    array = staircaseArray(bars.length || Number(sizeInput.value));
+    renderArray(array);
+    staircasePrepared = true;
+  }
+
   // play
   playGenerator(genCtor);
 }
@@ -247,6 +265,11 @@ function isSortedVisible() {
 function init() {
   updateSpeed();
   updateSizeCap();
+  // Apply saved theme preference (dark by default)
+  applySavedTheme();
+  // Restore saved algorithm and staircase preference
+  restoreUIState();
+
   array = staircaseOn
     ? staircaseArray(Number(sizeInput.value))
     : randomArray(Number(sizeInput.value));
@@ -261,6 +284,75 @@ function init() {
   // ensure visual fills exist for sliders
   setupRangeFill(sizeInput);
   setupRangeFill(speedInput);
+}
+
+// restore saved UI state: algorithm and staircase preference
+function restoreUIState() {
+  try {
+    const sa = localStorage.getItem("sv-algo");
+    if (sa && customSelect) {
+      customSelect.dataset.value = sa;
+      const btnLabel = customSelect.querySelector(".cs-selected .label");
+      const opt = customSelect.querySelector(`.cs-option[data-value="${sa}"]`);
+      if (btnLabel && opt) btnLabel.textContent = opt.textContent;
+    }
+    const ss = localStorage.getItem("sv-stair");
+    if (ss !== null) {
+      staircaseOn = ss === "1";
+      if (stairToggle) {
+        stairToggle.classList.toggle("active", staircaseOn);
+        stairToggle.textContent = "Staircase: " + (staircaseOn ? "On" : "Off");
+      }
+    }
+  } catch (e) {
+    // ignore storage errors
+  }
+}
+
+// Theme helpers
+function applySavedTheme() {
+  try {
+    const saved = localStorage.getItem("sv-theme");
+    if (saved === "light") setTheme("light");
+    else setTheme("dark");
+  } catch (e) {
+    // localStorage not available
+    setTheme("dark");
+  }
+}
+
+function setTheme(name) {
+  const body = document.body;
+  if (!body) return;
+  if (name === "light") {
+    body.classList.add("light-theme");
+    if (themeToggle) {
+      themeToggle.textContent = "Theme: Light";
+      themeToggle.setAttribute("aria-pressed", "true");
+      themeToggle.classList.add("active");
+    }
+    try {
+      localStorage.setItem("sv-theme", "light");
+    } catch (e) {}
+  } else {
+    body.classList.remove("light-theme");
+    if (themeToggle) {
+      themeToggle.textContent = "Theme: Dark";
+      themeToggle.setAttribute("aria-pressed", "false");
+      themeToggle.classList.remove("active");
+    }
+    try {
+      localStorage.setItem("sv-theme", "dark");
+    } catch (e) {}
+  }
+}
+
+// wire theme toggle
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const isLight = document.body.classList.contains("light-theme");
+    setTheme(isLight ? "dark" : "light");
+  });
 }
 
 function updateSizeCap() {
@@ -386,6 +478,9 @@ if (stairToggle) {
     staircaseOn = !staircaseOn;
     stairToggle.classList.toggle("active", staircaseOn);
     stairToggle.textContent = "Staircase: " + (staircaseOn ? "On" : "Off");
+    try {
+      localStorage.setItem("sv-stair", staircaseOn ? "1" : "0");
+    } catch (e) {}
   });
 }
 
@@ -448,6 +543,9 @@ window.revertStaircase = function () {
       cs.dataset.value = v;
       if (labelSpan) labelSpan.textContent = opt.textContent;
       close();
+      try {
+        localStorage.setItem("sv-algo", v);
+      } catch (e) {}
     });
   });
   document.addEventListener("click", (e) => {
