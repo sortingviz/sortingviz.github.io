@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sorting Visualizer</title>
+    <link rel="stylesheet" href="styles.css" />
+    <meta property="og:title" content="Sorting Visualizer" />
+    <meta property="og:description" content="Visualize various sorting algorithms in action!" />
+    <meta property="og:url" content="https://sortingviz.github.io" />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Sorting Algorithm Visualizer</h1>
+
+      <div class="controls">
+  <label>Algorithm:</label>
+        <div
+          id="algorithm"
+          class="custom-select"
+          role="listbox"
+          aria-label="Algorithm selector"
+          tabindex="0"
+          data-value="bubble"
+        >
+          <button
+            class="cs-selected"
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="label">Bubble Sort</span> <span class="chev">▾</span>
+          </button>
+          <ul class="cs-options" role="presentation">
+            <li class="cs-option" data-value="bubble" role="option">
+              Bubble Sort
+            </li>
+            <li class="cs-option" data-value="quick" role="option">
+              Quick Sort
+            </li>
+            <li class="cs-option" data-value="merge" role="option">
+              Merge Sort
+            </li>
+            <li class="cs-option" data-value="heap" role="option">Heap Sort</li>
+            <li class="cs-option" data-value="radix" role="option">
+              Radix Sort (LSD)
+            </li>
+          </ul>
+        </div>
+
+        <label>Size: <input id="size" type="range" min="5" max="100" value="50" /> <span id="sizeVal" class="readout">50</span></label>
+        <label>Speed: <input id="speed" type="range" min="1" max="1000" value="200" /> <span id="speedVal" class="readout">200</span></label>
+
+        <div class="btn-group">
+          <button id="newArray">New Array</button>
+          <button id="startStop" class="primary">Start</button>
+          <button id="pause">Pause</button>
+          <button id="stairToggle" class="muted">Staircase: Off</button>
+        </div>
+      </div>
+
+      <div id="stats" class="stats">
+        <div>Comparisons: <span id="comparisons">0</span></div>
+        <div>Swaps: <span id="swaps">0</span></div>
+      </div>
+
+      <div
+        id="board"
+        class="board"
+        role="region"
+        aria-label="Array visualization"
+      ></div>
+    <script src="algos.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
