@@ -14,7 +14,6 @@ const comparisonsEl = document.getElementById("comparisons");
 const swapsEl = document.getElementById("swaps");
 const sizeVal = document.getElementById("sizeVal");
 const speedVal = document.getElementById("speedVal");
-const themeToggle = document.getElementById("themeToggle");
 
 let array = [];
 let bars = [];
@@ -265,11 +264,6 @@ function isSortedVisible() {
 function init() {
   updateSpeed();
   updateSizeCap();
-  // Apply saved theme preference (dark by default)
-  applySavedTheme();
-  // Restore saved algorithm and staircase preference
-  restoreUIState();
-
   array = staircaseOn
     ? staircaseArray(Number(sizeInput.value))
     : randomArray(Number(sizeInput.value));
@@ -284,75 +278,6 @@ function init() {
   // ensure visual fills exist for sliders
   setupRangeFill(sizeInput);
   setupRangeFill(speedInput);
-}
-
-// restore saved UI state: algorithm and staircase preference
-function restoreUIState() {
-  try {
-    const sa = localStorage.getItem("sv-algo");
-    if (sa && customSelect) {
-      customSelect.dataset.value = sa;
-      const btnLabel = customSelect.querySelector(".cs-selected .label");
-      const opt = customSelect.querySelector(`.cs-option[data-value="${sa}"]`);
-      if (btnLabel && opt) btnLabel.textContent = opt.textContent;
-    }
-    const ss = localStorage.getItem("sv-stair");
-    if (ss !== null) {
-      staircaseOn = ss === "1";
-      if (stairToggle) {
-        stairToggle.classList.toggle("active", staircaseOn);
-        stairToggle.textContent = "Staircase: " + (staircaseOn ? "On" : "Off");
-      }
-    }
-  } catch (e) {
-    // ignore storage errors
-  }
-}
-
-// Theme helpers
-function applySavedTheme() {
-  try {
-    const saved = localStorage.getItem("sv-theme");
-    if (saved === "light") setTheme("light");
-    else setTheme("dark");
-  } catch (e) {
-    // localStorage not available
-    setTheme("dark");
-  }
-}
-
-function setTheme(name) {
-  const body = document.body;
-  if (!body) return;
-  if (name === "light") {
-    body.classList.add("light-theme");
-    if (themeToggle) {
-      themeToggle.textContent = "Theme: Light";
-      themeToggle.setAttribute("aria-pressed", "true");
-      themeToggle.classList.add("active");
-    }
-    try {
-      localStorage.setItem("sv-theme", "light");
-    } catch (e) {}
-  } else {
-    body.classList.remove("light-theme");
-    if (themeToggle) {
-      themeToggle.textContent = "Theme: Dark";
-      themeToggle.setAttribute("aria-pressed", "false");
-      themeToggle.classList.remove("active");
-    }
-    try {
-      localStorage.setItem("sv-theme", "dark");
-    } catch (e) {}
-  }
-}
-
-// wire theme toggle
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    const isLight = document.body.classList.contains("light-theme");
-    setTheme(isLight ? "dark" : "light");
-  });
 }
 
 function updateSizeCap() {
@@ -478,9 +403,6 @@ if (stairToggle) {
     staircaseOn = !staircaseOn;
     stairToggle.classList.toggle("active", staircaseOn);
     stairToggle.textContent = "Staircase: " + (staircaseOn ? "On" : "Off");
-    try {
-      localStorage.setItem("sv-stair", staircaseOn ? "1" : "0");
-    } catch (e) {}
   });
 }
 
@@ -543,9 +465,6 @@ window.revertStaircase = function () {
       cs.dataset.value = v;
       if (labelSpan) labelSpan.textContent = opt.textContent;
       close();
-      try {
-        localStorage.setItem("sv-algo", v);
-      } catch (e) {}
     });
   });
   document.addEventListener("click", (e) => {
